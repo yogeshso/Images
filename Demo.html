@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Alert Control Panel</title>
+  <style>
+    /* CSS Variables for Themes */
+    :root {
+      /* Light Theme Defaults (Sky Blue & White) */
+      --bg-color: #f0f8ff;            /* Alice Blue / Sky tint background */
+      --card-bg: #ffffff;            /* Pure White card background */
+      --border-color: #bae6fd;        /* Soft Sky Blue border */
+      --text-main: #0f172a;           /* Dark Slate main text */
+      --text-muted: #0284c7;          /* Sky Blue label text */
+      --primary-accent: #38bdf8;      /* Sky Blue accent */
+      --primary-btn: #0284c7;          /* Sky Blue action button */
+      --primary-btn-hover: #0369a1;    /* Darker Sky Blue hover */
+      --input-bg: #f8fafc;           /* Light input background */
+      --input-text: #0284c7;         /* Sky Blue input text */
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme */
+      --bg-color: #0d131f;
+      --card-bg: #1a2333;
+      --border-color: #2a364f;
+      --text-main: #ffffff;
+      --text-muted: #8c9ba5;
+      --primary-accent: #38bdf8;
+      --primary-btn: #f04438;
+      --primary-btn-hover: #d92d20;
+      --input-bg: #0b111e;
+      --input-text: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .dashboard {
+      width: 100%;
+      max-width: 850px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+
+    .controls-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Toggle Switch Style */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: 20px;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .toggle-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #cbd5e1;
+      transition: .3s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-accent);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Alert Cards */
+    .alert-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 180px 80px 1fr 140px;
+      align-items: center;
+      gap: 20px;
+      transition: background-color 0.3s, border-color 0.3s;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .alert-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .media-container {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .media-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .api-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .api-input-group label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .api-input {
+      width: 100%;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--input-text);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+      letter-spacing: 1px;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .trigger-btn {
+      background-color: var(--primary-btn);
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .trigger-btn:hover {
+      background-color: var(--primary-btn-hover);
+    }
+
+    .trigger-btn:active {
+      transform: scale(0.97);
+    }
+
+    .status-msg {
+      font-size: 0.75rem;
+      text-align: center;
+      min-height: 16px;
+      font-weight: 600;
+    }
+
+    .status-msg.success { color: #10b981; }
+    .status-msg.error { color: #ef4444; }
+    .status-msg.sending { color: #f59e0b; }
+
+    @media (max-width: 768px) {
+      .alert-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .media-container {
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard">
+    <div class="header">
+      <h1> Demo - Emergency Alert Control Panel</h1>
+      
+      <div class="controls-group">
+        <!-- Mask URL Toggle Switch -->
+        <div class="toggle-container">
+          <span class="toggle-label">Mask </span>
+          <label class="switch">
+            <input type="checkbox" id="maskToggle" checked onchange="toggleMasking()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Dark Theme Toggle Switch -->
+        <div class="toggle-container">
+          <span class="toggle-label">Dark Theme</span>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert 1: Fire Alarm -->
+    <div class="alert-card">
+      <div class="alert-label">Fire Alarm Alert</div>
+      <div class="media-container">
+        <img src="Fire-accident.gif"  alt="Fire Flame">
+      </div>
+      <div class="api-input-group">
+        <label for="api-fire"> REST API</label>
+        <input type="password" id="api-fire" class="api-input" value="http://192.168.3.75/api/flows/split_docall">
+      </div>
+      <div class="btn-container">
+        <button type="button" class="trigger-btn" onclick="triggerAlert(event, 'api-fire', 'Fire Alarm', 'status-fire')">Trigger</button>
+        <div id="status-fire" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Alert 2: Water Level -->
+    <div class="alert-card">
+      <div class="alert-label">Water Level Alert</div>
+      <div class="media-container">
+        <img src="water-level.gif" alt="Water Level">
+      </div>
+      <div class="api-input-group">
+        <label for="api-water"> REST API</label>
+        <input type="password" id="api-water" class="api-input" value="http://192.168.3.75/api/flows/water-level">
+      </div>
+      <div class="btn-container">
+        <button type="button" class="trigger-btn" onclick="triggerAlert(event, 'api-water', 'Water Level', 'status-water')">Trigger</button>
+        <div id="status-water" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Alert 3: Trespassing -->
+    <div class="alert-card">
+      <div class="alert-label">Trespassing Alert</div>
+      <div class="media-container">
+        <img src="tresspassing.gif" alt="Trespassing">
+      </div>
+      <div class="api-input-group">
+        <label for="api-trespass"> REST API</label>
+        <input type="password" id="api-trespass" class="api-input" value="http://192.168.3.75/api/flows/split_docall">
+      </div>
+      <div class="btn-container">
+        <button type="button" class="trigger-btn" onclick="triggerAlert(event, 'api-trespass', 'Trespassing', 'status-trespass')">Trigger</button>
+        <div id="status-trespass" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Alert 4: Man Down -->
+    <div class="alert-card">
+      <div class="alert-label">Man Down Alert</div>
+      <div class="media-container">
+        <img src="man-down.gif" alt="Man Down">
+      </div>
+      <div class="api-input-group">
+        <label for="api-mandown"> REST API</label>
+        <input type="password" id="api-mandown" class="api-input" value="http://192.168.3.75/api/flows/split_docall">
+      </div>
+      <div class="btn-container">
+        <button type="button" class="trigger-btn" onclick="triggerAlert(event, 'api-mandown', 'Man Down', 'status-mandown')">Trigger</button>
+        <div id="status-mandown" class="status-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dark/Light Theme Switch
+    function toggleTheme() {
+      const isDark = document.getElementById('themeToggle').checked;
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    }
+
+    // Toggle masking/unmasking of URL inputs
+    function toggleMasking() {
+      const isMasked = document.getElementById('maskToggle').checked;
+      const inputs = document.querySelectorAll('.api-input');
+      
+      inputs.forEach(input => {
+        input.type = isMasked ? 'password' : 'text';
+      });
+    }
+
+    async function triggerAlert(event, inputId, alertName, statusId) {
+      if (event) event.preventDefault();
+
+      const url = document.getElementById(inputId).value.trim();
+      const statusEl = document.getElementById(statusId);
+
+      if (!url) {
+        statusEl.className = "status-msg error";
+        statusEl.textContent = "URL Required";
+        return;
+      }
+
+      statusEl.className = "status-msg sending";
+      statusEl.textContent = "Sending...";
+
+      const payload = {
+        alertType: alertName,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          statusEl.className = "status-msg success";
+          statusEl.textContent = "Sent Successfully!";
+        } else {
+          statusEl.className = "status-msg error";
+          statusEl.textContent = `Failed (${response.status})`;
+        }
+      } catch (error) {
+        console.warn(`Standard CORS fetch failed for ${url}, trying fallback mode...`, error);
+
+        try {
+          await fetch(url, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          statusEl.className = "status-msg success";
+          statusEl.textContent = "Trigger Dispatched!";
+        } catch (fallbackErr) {
+          statusEl.className = "status-msg error";
+          statusEl.textContent = "Network Error";
+          console.error("API Call Failed:", fallbackErr);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
